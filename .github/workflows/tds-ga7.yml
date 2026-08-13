@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: TDS identity: 23f2000576@ds.study.iitm.ac.in
+      - name: "TDS identity: 23f2000576@ds.study.iitm.ac.in"
         run: echo "Identity verified"
 
       - name: Start server and test
