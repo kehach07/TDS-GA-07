@@ -1,0 +1,56 @@
+name: TDS GA7 Release Gate
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: TDS identity: 23f2000576@ds.study.iitm.ac.in
+        run: echo "Identity verified"
+
+      - name: Start server and test
+        run: |
+          npm start &
+          sleep 3
+          RESPONSE=$(curl -s -X POST http://localhost:3000/release-gate -H "Content-Type: application/json" -d '{
+            "target": "preview",
+            "event": "push",
+            "ref": "refs/heads/feature",
+            "workflow": {
+              "trigger": "push",
+              "permissions": {"contents":"read", "packages":"write", "id-token":"none"},
+              "testsPassed": true,
+              "matrixComplete": true,
+              "failFast": false,
+              "actions": [{"owner":"actions", "name":"checkout", "ref":"v4"}]
+            },
+            "image": {
+              "multiStage": true,
+              "runsAsRoot": false,
+              "secretMode": "none",
+              "criticalVulnerabilities": 0,
+              "digestPinned": true
+            }
+          }')
+          echo "Response: $RESPONSE"
+          if echo "$RESPONSE" | grep -q '"decision":"promote"'; then
+            echo "Test passed!"
+          else
+            echo "Test failed!"
+            exit 1
+          fi
